@@ -16,6 +16,8 @@
     "eslint": "8.44.0",
     "eslint-config-next": "13.4.9",
     "next": "13.4.9",
+    "primeflex": "^3.3.1",
+    "primeicons": "^6.0.1",
     "primereact": "^9.6.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
