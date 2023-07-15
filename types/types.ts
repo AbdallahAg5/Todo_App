@@ -17,3 +17,10 @@ export type valType = {
      status:string
 
 }
+
+
+
+export type ColumnMeta = {
+    field: string;
+    header: string;
+}

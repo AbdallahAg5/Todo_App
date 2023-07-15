@@ -5,8 +5,11 @@ import {Button} from 'primereact/button'
 import {Toast} from 'primereact/toast'
 import { Column } from 'primereact/column'
 import {RootType} from '@/redux/store/store'
-import { dataType  } from '@/types/types'
+import { dataType , ColumnMeta  } from '@/types/types'
 import { deleteAllSelected, deleteTask } from '@/redux/slice/TodoSlice'
+import { Paginator } from 'primereact/paginator';
+import { Tooltip } from 'primereact/tooltip';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 
 
 
@@ -16,8 +19,18 @@ function Data() {
     const tasks = useSelector( (e : RootType) => e.todo.tasks)
     const [selectedTodos, setSelectedTodos] = useState<dataType[] | null>(null);
     const [rowClick, setRowClick] = useState<boolean>(true);
+    const [first, setFirst] = useState(0);
+    const [rows, setRows] = useState(2);
     const dispatch = useDispatch()
     
+     const cols: ColumnMeta[] = [
+        { field: 'id', header: 'Id' },
+        { field: 'task_name', header: 'Name' },
+        { field: 'status', header: 'Status' },
+
+    ];
+
+    const exportColumns = cols.map((col) => ({ title: col.header, dataKey: col.field }));
 
     const showWarn = ():void => {
         toast.current.show({severity:'warn', summary: 'Warning', detail:'No Todos Selected', life: 3000});
@@ -33,8 +46,27 @@ function Data() {
           }
    }
 
-    const DeleteHandler : (id : number) => void  = (id : number) =>{
-        dispatch(deleteTask({id}));
+        const acceptAction = (id : number) => {
+            console.log(id)
+            dispatch(deleteTask({id}));
+            toast.current.show({severity:'success', summary: 'Success', detail:'Deleted Successfully', life: 3000})
+        }
+
+        const reject = () => {
+            toast.current.show({ severity: 'warn', summary: 'Rejected', detail: 'Delete rejected', life: 3000 });
+        }
+
+        const DeleteHandler : (id : number) => void  = (id : number) =>{
+            confirmDialog({
+                message: 'Do you want to delete this record?',
+                header: 'Delete Confirmation',
+                icon: 'pi pi-info-circle',
+                acceptClassName: 'p-button-danger',
+                accept: (): void => { acceptAction(id) },
+                reject
+            });
+
+
     }
 
     const Operations = (rowData: dataType) =>{
@@ -46,27 +78,88 @@ function Data() {
           )
     }
 
+    const exportExcel = () => {
+        import('xlsx').then((xlsx) => {
+            const worksheet = xlsx.utils.json_to_sheet(tasks);
+            const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
+            const excelBuffer = xlsx.write(workbook, {
+                bookType: 'xlsx',
+                type: 'array'
+            });
+
+            saveAsExcelFile(excelBuffer, 'products');
+        });
+    };
+
+    const exportPdf = () => {
+        import('jspdf').then((jsPDF) => {
+            import('jspdf-autotable').then(() => {
+                const doc = new jsPDF.default(0, 0);
+
+                doc.autoTable(exportColumns, tasks);
+                doc.save('products.pdf');
+            });
+        });
+    };
+
+    const saveAsExcelFile = (buffer, fileName) => {
+        import('file-saver').then((module) => {
+            if (module && module.default) {
+                let EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+                let EXCEL_EXTENSION = '.xlsx';
+                const data = new Blob([buffer], {
+                    type: EXCEL_TYPE
+                });
+
+                module.default.saveAs(data, fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION);
+            }
+        });
+    };
+
+    const header = (
+        <div className="flex align-items-center justify-content-end gap-2">
+            <Button type="button" icon="pi pi-file-excel" severity="success" rounded onClick={exportExcel} data-pr-tooltip="XLS" />
+            <Button type="button" icon="pi pi-file-pdf" severity="warning" rounded onClick={exportPdf} data-pr-tooltip="PDF" />
+        </div>
+    );
+
+
   return (
-    <div className="card">
+    <div className="card w-11 mx-auto">
         <Toast ref={toast} />
-        <Button label="Delete Checked Todos" severity="danger" raised  className='mr-2 ml-8' onClick={() => DeleteAllSelectTodos()}/>
+        <ConfirmDialog />
+        <Button disabled={tasks.length == 0} label="Delete Checked Todos" severity="danger" raised  className='mr-2 ml-8' onClick={() => DeleteAllSelectTodos()}/>
+        <Tooltip target=".export-buttons>button" position="bottom" />
         <DataTable
-            className='mt-5 w-11 mx-auto text-center'
-            value={tasks}
-            selectionMode={rowClick ? undefined : 'multiple'}
-            selection={selectedTodos!}
-            onSelectionChange={(e) => {
-                const value = e.value as dataType[];
-                setSelectedTodos(value);
-            }}
-            dataKey="id"
-            tableStyle={{ minWidth: '50rem' }}
-            >
-            <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
-            <Column field={'task_name'} header="Task Name"></Column>
-            <Column field={'status'} header="Progress" body={(rowData) =>PregressStyle(rowData)}></Column>
-            <Column  body={(rowData) =>Operations(rowData)} header="Operations" className='w-2'></Column>
-            </DataTable>
+        className='mt-5 w-11 mx-auto text-center'
+        value={tasks.slice(first, first + rows)}
+        selectionMode={rowClick ? undefined : 'multiple'}
+        selection={selectedTodos!}
+        onSelectionChange={(e) => {
+            const value = e.value as dataType[];
+            setSelectedTodos(value);
+        }}
+        header={header}
+        dataKey="id"
+        tableStyle={{ minWidth: '50rem' }}
+    >
+        <Column selectionMode="multiple" headerStyle={{ width: '3rem' }}></Column>
+        <Column field={'task_name'} sortable  header="Task Name" className='font-bold w-5'></Column>
+        <Column field={'status'} header="Progress" body={(rowData) =>PregressStyle(rowData)} className='w-5'
+        ></Column>
+        <Column  body={(rowData) =>Operations(rowData)} header="Operations" className='w-2 '></Column>
+    </DataTable>
+   {tasks.length > 0 ? <Paginator
+        className='mx-7'
+        first={first}
+        rows={rows}
+        totalRecords={tasks.length}
+        rowsPerPageOptions={[2,4,6]}
+        onPageChange={(e) => {
+            setFirst(e.first);
+            setRows(e.rows);
+        }}
+    /> : null}
   </div>
 
   )
@@ -89,7 +182,10 @@ function PregressStyle (rowData : dataType) : any {
 
     
 
-    return <div style={{ backgroundColor }} className='w-2 text-center py-1 border-round-md text-white font-bold px-1'>{rowData.status}</div>;
+    return <div
+               style={{ backgroundColor }} 
+               className={`w-2 text-center py-1 border-round-md text-white font-bold ${rowData.status == 'todo' ? 'px-1' : 'pr-3 px-1' }`}
+           >{rowData.status}</div>;
 }
 
 
