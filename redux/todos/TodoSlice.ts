@@ -1,12 +1,10 @@
 import { data } from '@/app/data/data';
-import { dataType, valType } from '@/types/types';
+import { InitialStateType, dataType, valType } from '@/types/types';
 import {createSlice , PayloadAction } from '@reduxjs/toolkit'
+import todoThunk from './TodoThunk';
+import { todosPending, todosRejected, todosSuccess } from './reducers';
 
 
-
-type InitialStateType = {
-    tasks: dataType[]
-}
 
 
 const InitialState : InitialStateType  = {
@@ -38,8 +36,13 @@ const TodoSlice =  createSlice({
           
           
       },
-      extraReducers:{}
-})   
+      extraReducers: (builder) => {
+        builder
+          .addCase(todoThunk.pending, todosPending )
+          .addCase(todoThunk.fulfilled, todosSuccess )
+          .addCase(todoThunk.rejected, todosRejected )
+      },
+    });
 
 
 export const { addTask , deleteTask , deleteAllSelected } = TodoSlice.actions

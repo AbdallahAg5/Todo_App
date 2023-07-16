@@ -1,13 +1,14 @@
+import { data } from './../../app/data/data';
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { dataType } from '@/types/types';
+import getTodos from '@/lib/mysql/model/todos.';
 
-type Data = {
-  name: string
+
+
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse<{}>) {
+  let result = await getTodos();
+  return res.json({'data':result[0]})
 }
 
-export default function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-  res.status(200).json({ name: 'John Doe' })
-}

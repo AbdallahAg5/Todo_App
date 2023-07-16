@@ -14,7 +14,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="bg-cyan-500 w-full h-screen flex-column justify-content-center align-items-center">
+      <main className="bg-cyan-500 w-full pb-5 flex-column justify-content-center align-items-center">
         <Form />
         <Data />
       </main>

@@ -24,3 +24,8 @@ export type ColumnMeta = {
     field: string;
     header: string;
 }
+
+
+export type InitialStateType = {
+    tasks: dataType[]
+}
