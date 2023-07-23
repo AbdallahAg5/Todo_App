@@ -19,6 +19,8 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Badge } from "primereact/badge";
 import todoThunk from "@/redux/todos/TodoThunk";
+import  Link  from "next/link"
+import { AnyAction, ThunkDispatch } from "@reduxjs/toolkit";
 
 function Data() {
   const toast: MutableRefObject<any> = useRef(null);
@@ -28,7 +30,7 @@ function Data() {
   const [first, setFirst] = useState(0);
   const [rows, setRows] = useState(2);
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch();
+  const dispatch: ThunkDispatch<RootType, unknown, AnyAction> = useDispatch();
 
   const cols: ColumnMeta[] = [
     { field: "id", header: "Id" },
@@ -38,8 +40,9 @@ function Data() {
 
   
   useEffect(() => {
-       dispatch(todoThunk());
-  },[]);
+    dispatch(todoThunk());
+  }, [dispatch]);
+  
 
 
   const exportColumns = cols.map((col) => ({
@@ -113,6 +116,9 @@ function Data() {
           onClick={() => DeleteHandler(rowData.id)}
         />
         <Button label="Update" severity="success" raised />
+        <Link  href="/todo/[id]" as={`/todo/${rowData.id}`} className="absolute"> 
+           <Button  label="Details"  severity="help" raised className="ml-2"></Button>
+        </Link>
       </>
     );
   };
@@ -133,15 +139,14 @@ function Data() {
   const exportPdf = () => {
     import("jspdf").then((jsPDF) => {
       import("jspdf-autotable").then(() => {
-        const doc = new jsPDF.default(0, 0);
-
+        const doc : any = new jsPDF.default("portrait", "pt");
         doc.autoTable(exportColumns, tasks);
         doc.save("products.pdf");
       });
     });
   };
 
-  const saveAsExcelFile = (buffer, fileName) => {
+  const saveAsExcelFile = (buffer : any, fileName : any) => {
     import("file-saver").then((module) => {
       if (module && module.default) {
         let EXCEL_TYPE =
@@ -232,12 +237,12 @@ function Data() {
           field={"status"}
           header="Progress"
           body={(rowData) => PregressStyle(rowData)}
-          className="w-5"
+          className="w-3"
         ></Column>
         <Column
           body={(rowData) => Operations(rowData)}
           header="Operations"
-          className="w-2 "
+          className="w-3"
         ></Column>
       </DataTable>
       {tasks.length > 0 ? (

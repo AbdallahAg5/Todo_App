@@ -1,8 +1,7 @@
-import { data } from '../../app/data/data';
+import { data } from '../../../app/data/data';
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { dataType } from '@/types/types';
-import getTodos from '@/lib/mysql/model/todos.';
+import { getTodos } from '@/lib/mysql/model/todos.';
 
 
 

@@ -1,0 +1,2 @@
+// [[...params]] to access the test without using aa param 
+// [...params] infinite parameters and to access this you need at least on param
